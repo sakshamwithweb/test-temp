@@ -5,30 +5,49 @@
 </head>
 
 <body>
-    <div>
-        <div>
-            <div>
-                <video id="video" width="100%" height="100%" autoplay></video>
-                <button onClick="startCam()">Start Cam</button>
-            </div>
-        </div>
-        <!--
+    <!--
     Camera start button -> Camera on and in every 10 seconds of interval send the video to memories.ai and do something(for detecting abuse) and show the status
     -->
-        <script>
-            const startCam = () => {
-                const video = document.getElementById('video');
-                if (navigator.mediaDevices.getUserMedia) {
-                    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-                        video.srcObject = stream;
-                    })
+    <script>
+        async function startRecording() {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 360 },
+                    frameRate: { ideal: 15, max: 15 }
+                }
+            });
+
+            const video = document.querySelector("video");
+            video.srcObject = stream;
+
+            const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+                ? 'video/webm;codecs=vp8'
+                : 'video/webm';
+
+            const recorder = new MediaRecorder(stream, {
+                mimeType: mime,
+                videoBitsPerSecond: 500_000
+            });
+
+            recorder.ondataavailable = async (e) => {
+                if (e.data.size > 0) {
+                    const blob = e.data;
+                    const file = new File([blob], `clip_${Date.now()}.webm`, { type: blob.type });
+
+                    const form = new FormData();
+                    form.append('clip', file);
+                    await fetch('https://unulcerous-unelating-andra.ngrok-free.dev/upload', { method: 'POST', body: form });
                 }
             };
 
-            $(document).ready(() => {
-                startCam();
-            });
-        </script>
+            recorder.start(10_000);
+        }
+    </script>
+
+    <video autoplay playsinline></video>
+    <button onclick="startRecording()">Start</button>
+
 </body>
 
 </html>
