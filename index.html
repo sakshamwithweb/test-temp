@@ -6,10 +6,29 @@
 
 <body>
     <div>
-        <video id="video" width="100%" height="100%" autoplay></video>
-        <button onClick="startCam()">Start Cam</button>
-    </div>
-    <script src="main.js"></script>
+        <div>
+            <div>
+                <video id="video" width="100%" height="100%" autoplay></video>
+                <button onClick="startCam()">Start Cam</button>
+            </div>
+        </div>
+        <!--
+    Camera start button -> Camera on and in every 10 seconds of interval send the video to memories.ai and do something(for detecting abuse) and show the status
+    -->
+        <script>
+            const startCam = () => {
+                const video = document.getElementById('video');
+                if (navigator.mediaDevices.getUserMedia) {
+                    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+                        video.srcObject = stream;
+                    })
+                }
+            };
+
+            $(document).ready(() => {
+                startCam();
+            });
+        </script>
 </body>
 
 </html>
