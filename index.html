@@ -6,43 +6,45 @@
 
 <body>
     <!--
-    Camera start button -> Camera on and in every 10 seconds of interval send the video to memories.ai and do something(for detecting abuse) and show the status
+    Camera start button -> Camera on and in every 10 seconds of interval send the video to server that sends to memories.ai and do something(if detected abuse)
     -->
     <script>
         async function startRecording() {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: { ideal: 640 },
-                    height: { ideal: 360 },
-                    frameRate: { ideal: 15, max: 15 }
-                }
+                video: { width: 640, height: 360, frameRate: 15 }
             });
 
             const video = document.querySelector("video");
             video.srcObject = stream;
 
-            const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
-                ? 'video/webm;codecs=vp8'
-                : 'video/webm';
+            const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ?
+                'video/webm;codecs=vp8' : 'video/webm';
 
-            const recorder = new MediaRecorder(stream, {
-                mimeType: mime,
-                videoBitsPerSecond: 500_000
-            });
+            async function recordChunk() {
+                const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 500_000 });
 
-            recorder.ondataavailable = async (e) => {
-                if (e.data.size > 0) {
-                    const blob = e.data;
-                    const file = new File([blob], `clip_${Date.now()}.webm`, { type: blob.type });
+                recorder.ondataavailable = async (e) => {
+                    if (e.data.size > 0) {
+                        const blob = e.data;
+                        const file = new File([blob], `clip_${Date.now()}.webm`, { type: blob.type });
 
-                    const form = new FormData();
-                    form.append('clip', file);
-                    await fetch('https://unulcerous-unelating-andra.ngrok-free.dev/upload', { method: 'POST', body: form });
-                }
-            };
+                        const form = new FormData();
+                        form.append('clip', file);
+                        await fetch('https://unulcerous-unelating-andra.ngrok-free.dev/upload', { method: 'POST', body: form });
+                    }
+                };
 
-            recorder.start(10_000);
+                recorder.start();
+
+                setTimeout(() => {
+                    recorder.stop();
+                }, 10_000);
+            }
+
+            setInterval(recordChunk, 10_000);
+            recordChunk();
         }
+
     </script>
 
     <video autoplay playsinline></video>
