@@ -5,24 +5,25 @@
 </head>
 
 <body>
-    <!--
-    Camera start button -> Camera on and in every 10 seconds of interval send the video to server that sends to memories.ai and do something(if detected abuse)
-    -->
     <script>
         async function startRecording() {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { width: 640, height: 360, frameRate: 15 }
+                video: { width: 640, height: 360, frameRate: 15 },
+                audio: true
             });
 
             const video = document.querySelector("video");
             video.srcObject = stream;
 
-            const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ?
-                'video/webm;codecs=vp8' : 'video/webm';
+            const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ?
+                'video/webm;codecs=vp8,opus' : 'video/webm';
 
             async function recordChunk() {
                 return new Promise((resolve) => {
-                    const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 500_000 });
+                    const recorder = new MediaRecorder(stream, {
+                        mimeType: mime,
+                        videoBitsPerSecond: 500_000
+                    });
 
                     recorder.ondataavailable = async (e) => {
                         if (e.data.size > 0) {
@@ -31,27 +32,29 @@
 
                             const form = new FormData();
                             form.append('clip', file);
-                            await fetch('https://unulcerous-unelating-andra.ngrok-free.dev/upload', { method: 'POST', body: form });
+
+                            await fetch('https://unulcerous-unelating-andra.ngrok-free.dev/upload', {
+                                method: 'POST',
+                                body: form
+                            });
                         }
                     };
 
-                    recorder.onstop = () => resolve();  // resolve when recording finishes
+                    recorder.onstop = () => resolve();
 
                     recorder.start();
-                    setTimeout(() => recorder.stop(), 10_000);
+                    setTimeout(() => recorder.stop(), 10_000); // record 10 seconds
                 });
             }
 
-            // Loop continuously, waiting for each 10s recording to finish
             while (true) {
                 await recordChunk();
             }
         }
     </script>
 
-    <video autoplay playsinline></video>
+    <video autoplay playsinline muted></video>
     <button onclick="startRecording()">Start</button>
-
 </body>
 
 </html>
